@@ -1,0 +1,15 @@
+# OPTIONAL — example override for nginx-proxy + acme-companion setups.
+# Copy to docker-compose.override.yml (gitignored) and adjust:
+#   cp docker-compose.proxy.example.yml docker-compose.override.yml
+services:
+  app:
+    environment:
+      VIRTUAL_HOST: krymark.example.com
+      LETSENCRYPT_HOST: krymark.example.com
+      VIRTUAL_PORT: 3000
+    networks: [proxy, default]
+
+networks:
+  proxy:
+    external: true
+    name: proxy   # your reverse-proxy network name

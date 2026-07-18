@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KryMark — feedback on vibecoded sites, as an AI prompt</title>
+<meta name="description" content="Open-source feedback widget for vibecoded websites. Non-coders click an element and type; you (or your AI editor via MCP) get a DOM-rich fix prompt. Self-host with Docker." />
+<meta property="og:title" content="KryMark — feedback that becomes an AI prompt" />
+<meta property="og:description" content="Embed widget · browser extension · bookmarklet · built-in MCP server. Open source, self-hosted." />
+<style>
+  :root{
+    --bg:#0a0a0a; --surface:#111112; --surface2:#17171a; --line:#232326;
+    --ink:#f2f2f3; --dim:#a0a0a8; --dim2:#6a6a72; --mark:#ff3d2e; --mark2:#ff5a3c;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  code{font-family:var(--mono);font-size:.86em;background:#1c1c1f;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+
+  nav{position:sticky;top:0;z-index:20;background:rgba(10,10,10,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .brand{font-family:var(--mono);font-size:15px;letter-spacing:.02em}
+  .brand b{color:var(--mark)}
+  .navlinks{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 15px;border-radius:8px;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+  .btn:hover{background:var(--surface2)}
+  .btn.mark{background:var(--mark);border-color:var(--mark);color:#fff}
+  .btn.mark:hover{background:var(--mark2)}
+
+  /* hero */
+  .hero{padding:80px 0 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;position:relative}
+  .hero::before{content:"";position:absolute;top:-40px;left:-80px;width:420px;height:260px;background:radial-gradient(closest-side,rgba(255,61,46,.10),transparent);pointer-events:none}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mark2);margin-bottom:16px}
+  h1{font-size:clamp(30px,4.4vw,46px);line-height:1.08;letter-spacing:-.035em;font-weight:600}
+  h1 em{font-style:normal;color:var(--mark)}
+  .lede{font-size:17px;color:var(--dim);margin:20px 0 26px;max-width:500px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .cta .minor{font-size:13px;color:var(--dim2)}
+  @media(max-width:840px){.hero{grid-template-columns:1fr;padding-top:48px}}
+
+  /* mock */
+  .mock{background:#fff;border-radius:14px;box-shadow:0 30px 70px rgba(0,0,0,.5);padding:16px;position:relative}
+  .mock .bar{display:flex;gap:6px;margin-bottom:14px}
+  .mock .bar i{width:10px;height:10px;border-radius:50%;background:#e3e3e6}
+  .mock .row{height:13px;border-radius:4px;background:#eef0f2;margin:10px 0}
+  .mock .row.w70{width:70%}.mock .row.w40{width:40%}
+  .mock .marked{position:relative;margin:16px 0;width:60%;padding:10px 14px;border-radius:8px;background:#c8874f;color:#fff;font-size:13px;font-weight:600;border:2px solid var(--mark)}
+  .mock .marked::after{content:"◉ button.cta";position:absolute;top:-21px;left:-2px;background:var(--mark);color:#fff;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px}
+  .bubble{position:absolute;right:-16px;bottom:-30px;width:250px;background:#111112;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:13px 15px;font-size:13px;color:var(--ink)}
+  .bubble b{display:block;color:var(--mark2);font-family:var(--mono);font-size:10px;margin-top:6px}
+  @media(max-width:840px){.bubble{right:6px}}
+
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  .h2{font-size:13px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;color:var(--dim2);margin-bottom:26px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.steps{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .card .k{font-family:var(--mono);font-size:11px;color:var(--mark2);margin-bottom:10px}
+  .card h3{font-size:16px;margin-bottom:7px;letter-spacing:-.01em}
+  .card p{font-size:14px;color:var(--dim);line-height:1.55}
+
+  .installs{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:680px){.installs{grid-template-columns:1fr}}
+  .install{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .install .ic{font-family:var(--mono);color:var(--mark2);font-size:18px;flex:none}
+  .install h4{font-size:15px;margin-bottom:4px}
+  .install p{font-size:13.5px;color:var(--dim)}
+
+  .feats{columns:2;column-gap:16px}
+  @media(max-width:680px){.feats{columns:1}}
+  .feat{break-inside:avoid;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--dim)}
+  .feat b{color:var(--ink);font-weight:600}
+
+  pre{background:#141416;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:#dfe0e2;max-width:640px}
+  .mcp{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
+  @media(max-width:760px){.mcp{grid-template-columns:1fr}}
+  .mcp p{color:var(--dim);font-size:15px;margin-bottom:16px}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--dim2);font-size:13px}
+  footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<nav><div class="wrap in">
+  <span class="brand">kry<b>mark</b></span>
+  <span class="navlinks">
+    <a class="btn" href="#install">Install</a>
+    <a class="btn" href="https://github.com/kryphan/krymark/tree/main/docs">Docs</a>
+    <a class="btn mark" href="https://github.com/kryphan/krymark">GitHub ★</a>
+  </span>
+</div></nav>
+
+<header class="wrap hero">
+  <div>
+    <p class="eyebrow">◉ Open source · self-hosted</p>
+    <h1>Feedback on your vibecoded site, <em>as an AI prompt that fixes it</em>.</h1>
+    <p class="lede">You built it with Lovable, Bolt, v0 or Cursor. KryMark lets non-coders click the exact element and say what they want — and hands you (or your AI editor via MCP) a DOM-rich, paste-ready fix prompt.</p>
+    <div class="cta">
+      <a class="btn mark" href="https://github.com/kryphan/krymark" style="padding:12px 22px;font-size:15px">Get it on GitHub</a>
+      <a class="btn" href="#install" style="padding:12px 22px;font-size:15px">How to install</a>
+      <span class="minor">MIT · Docker · one script tag</span>
+    </div>
+  </div>
+  <div class="mock" aria-hidden="true">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="row w70"></div><div class="row"></div>
+    <div class="marked">Order now</div>
+    <div class="row"></div><div class="row w40"></div>
+    <div class="bubble">“this button is hard to see, make it bolder”<b>→ copy AI prompt · paste in Cursor</b></div>
+  </div>
+</header>
+
+<section id="how"><div class="wrap">
+  <p class="h2">How it works</p>
+  <div class="steps">
+    <div class="card"><div class="k">01 · you</div><h3>Add it once</h3><p>Paste one <code>&lt;script&gt;</code> tag, or use the browser extension / bookmarklet to review sites you can’t touch the code of.</p></div>
+    <div class="card"><div class="k">02 · your client</div><h3>They click &amp; type</h3><p>A Feedback tab sits on the edge. Reviewers tap the exact element, type in any language, hit send. No login, no install.</p></div>
+    <div class="card"><div class="k">03 · your AI</div><h3>You paste, it fixes</h3><p>Each note arrives with the element’s HTML, styles, a screenshot and page context — compiled into a prompt built for Cursor, Lovable or Claude.</p></div>
+  </div>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <p class="h2">Four ways to collect feedback</p>
+  <div class="installs">
+    <div class="install"><span class="ic">&lt;/&gt;</span><div><h4>Embed snippet</h4><p>One script tag on any site you control. Reviewers install nothing.</p></div></div>
+    <div class="install"><span class="ic">⌘</span><div><h4>Browser extension</h4><p>Review any site — even ones you can’t add code to. Beats strict CSP.</p></div></div>
+    <div class="install"><span class="ic">☆</span><div><h4>Bookmarklet</h4><p>Drag to your bookmarks bar, click on any page. Zero install.</p></div></div>
+    <div class="install"><span class="ic">◉</span><div><h4>MCP for AI agents</h4><p>Your AI editor pulls feedback, fixes it, resolves notes — end to end.</p></div></div>
+  </div>
+</div></section>
+
+<section id="mcp"><div class="wrap mcp">
+  <div>
+    <p class="h2">Built for AI editors</p>
+    <p>Point Claude Code or Cursor at your instance with an API key. The agent lists new feedback, builds the fix prompt itself, applies the changes and marks notes resolved — the reporter even gets an email to confirm the fix.</p>
+    <a class="btn" href="https://github.com/kryphan/krymark/blob/main/docs/mcp.md">Read the MCP guide →</a>
+  </div>
+  <pre>{
+  "mcpServers": {
+    "krymark": {
+      "type": "http",
+      "url": "https://your-krymark/api/mcp",
+      "headers": { "Authorization": "Bearer km_live_…" }
+    }
+  }
+}
+
+# then just ask your agent:
+"Pull my KryMark feedback and fix all of it."</pre>
+</div></section>
+
+<section><div class="wrap">
+  <p class="h2">What’s inside</p>
+  <div class="feats">
+    <div class="feat"><b>Frozen snapshots</b> — element HTML, styles, position &amp; screenshot captured at report time. Selectors drift; snapshots don’t.</div>
+    <div class="feat"><b>Fix Session</b> — select many notes, get one numbered batch prompt for your AI.</div>
+    <div class="feat"><b>Dashboard</b> — list / cards / kanban board, auto-tagging, filters, page grouping, duplicate clustering.</div>
+    <div class="feat"><b>Closed loop</b> — resolving emails the reporter with “fixed the way you wanted?” links.</div>
+    <div class="feat"><b>Screenshots on S3</b> — public URLs embedded in prompts so vision models can look.</div>
+    <div class="feat"><b>Outbound webhooks</b> — note events to n8n / Slack / ClickUp / anything.</div>
+    <div class="feat"><b>Multi-tenant</b> — orgs, projects, invites, roles. PocketBase rules enforce isolation.</div>
+    <div class="feat"><b>Anti-spam</b> — IP-hash rate limiting + per-project daily caps, on by default.</div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="h2">Self-host in minutes</p>
+  <pre>git clone https://github.com/kryphan/krymark &amp;&amp; cd krymark
+cp .env.example .env          # set your origin + a salt
+docker compose up -d --build
+npm run setup                 # collections + multi-tenant rules</pre>
+  <div style="margin-top:18px"><a class="btn mark" href="https://github.com/kryphan/krymark/blob/main/docs/self-hosting.md" style="padding:11px 20px">Full self-hosting guide →</a></div>
+</div></section>
+
+<footer><div class="wrap" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:12px">
+  <span>KryMark — MIT licensed. Next.js + PocketBase.</span>
+  <span><a href="https://github.com/kryphan/krymark">GitHub</a> · <a href="https://github.com/kryphan/krymark/tree/main/docs">Docs</a></span>
+</div></footer>
+</body>
+</html>

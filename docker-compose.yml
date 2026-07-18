@@ -1,0 +1,26 @@
+# KryMark — self-host stack: Next app + PocketBase. Quickstart: see README.md
+# Reverse proxy (nginx-proxy/Traefik/Caddy) is optional — add your own override file
+# (see docker-compose.proxy.example.yml). The override file is gitignored on purpose.
+services:
+  app:
+    build: .
+    container_name: krymark-app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      PB_URL: http://pocketbase:8090
+    depends_on: [pocketbase]
+
+  pocketbase:
+    build:
+      context: .
+      dockerfile: Dockerfile.pb
+    container_name: krymark-pb
+    restart: unless-stopped
+    volumes:
+      - ./pb-data:/pb/pb_data          # survives deploys (gitignored)
+      - ./pb/pb_hooks:/pb/pb_hooks:ro  # org auto-create hook, ships with the repo
+    ports:
+      - "127.0.0.1:${PB_ADMIN_PORT:-8091}:8090"  # admin UI — localhost only, use an SSH tunnel

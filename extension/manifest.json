@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "KryMark \u2014 feedback on any site",
+  "version": "1.9.3",
+  "description": "Leave element-anchored feedback on any website for your self-hosted KryMark. Click, type, and get an AI-ready fix prompt.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KryMark",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "toggle-feedback": {
+      "suggested_key": {
+        "default": "Alt+C"
+      },
+      "description": "KryMark: pick an element to leave feedback"
+    }
+  },
+  "homepage_url": "https://github.com/kryphan/krymark",
+  "minimum_chrome_version": "116"
+}
