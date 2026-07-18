@@ -1,0 +1,20 @@
+node_modules/
+.next/
+dist/
+!extension/dist/
+build/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.turbo/
+coverage/
+/pb-data/
+pb_data/
+docker-compose.override.yml
+.deploy*.env
+
+# Chrome extension packing artifacts (private signing key — keep local only)
+*.pem
+*.crx

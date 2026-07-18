@@ -1,0 +1,31 @@
+{
+  "name": "krymark",
+  "version": "1.8.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run build:widget && npm run build:ext && next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "build:widget": "esbuild widget/src/main.ts --bundle --format=iife --minify --target=es2019 --outfile=public/w.js",
+    "setup": "node pb/setup-collections.mjs",
+    "build:ext": "esbuild widget/src/ext-entry.ts --bundle --format=iife --minify --target=es2019 --outfile=extension/dist/content.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1089.0",
+    "@aws-sdk/client-sesv2": "^3.1089.0",
+    "@zumer/snapdom": "^2.16.0",
+    "geist": "^1.7.2",
+    "next": "^16.0.0",
+    "pocketbase": "^0.27.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.28.1",
+    "typescript": "^5"
+  }
+}

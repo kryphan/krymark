@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "KryMark \u2014 feedback on any site",
+  "version": "1.8.0",
+  "description": "Review any website with KryMark without touching its code. Pick a project, click Start, leave element-anchored feedback.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KryMark"
+  },
+  "options_page": "options.html",
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "128": "icon128.png"
+  }
+}
